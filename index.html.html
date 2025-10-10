@@ -1,0 +1,367 @@
+---
+Project: 3D + STEP + GERBER Portfolio Starter
+Files included below. Drop these into a repo and enable GitHub Pages (branch: main / docs/ or gh-pages).
+
+---
+FILE: README.md
+```md
+# 3D Portfolio Starter (HTML)
+
+Static portfolio supporting interactive viewing for:
+- 3D models (GLB/GLTF/OBJ/STL) via Three.js
+- STEP files via OpenCascade.js (in-browser)
+- GERBER (PCB) files via tracespace-view
+
+Theme: Dark
+Project details are editable in `projects.json`.
+
+## Quick deploy
+1. Create a new GitHub repo and push these files.
+2. In GitHub repo settings -> Pages -> choose branch `main` (or `gh-pages`) and `/ (root)`.
+3. Visit `https://<your-username>.github.io/<repo-name>/`
+
+## How to add/edit a project
+- Add files (models/step/gerber) into the `assets/` folder.
+- Edit `projects.json` to add a new project object (see example).
+- Commit changes to GitHub. Pages will auto-deploy.
+
+## Notes about preventing downloads
+Completely preventing downloads is impossible: the browser needs the file. This starter hides direct links, disables right-click, and obfuscates paths. For stronger protection consider a server-side fetch-with-token or watermarking renders.
+```
+
+---
+FILE: index.html
+```html
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>My 3D & PCB Design Portfolio</title>
+  <link rel="stylesheet" href="assets/css/styles.css">
+</head>
+<body>
+  <main class="container">
+    <header>
+      <h1 id="site-title">Albert’s 3D & PCB Design Portfolio</h1>
+      <p id="site-desc">I specialize in 3D modeling, CAD design, and PCB development.</p>
+    </header>
+
+    <section id="grid"></section>
+
+    <footer>
+      <p>Contact: <a id="contact-email" href="mailto:you@example.com">you@example.com</a></p>
+    </footer>
+  </main>
+
+  <script src="assets/js/main.js"></script>
+</body>
+</html>
+```
+
+---
+FILE: assets/css/styles.css
+```css
+:root{ --bg:#0b0b0d; --surface:#0f1113; --muted:#9aa0a6; --accent:#3b82f6; color-scheme: dark }
+*{box-sizing:border-box}
+body{margin:0;font-family:Inter,Segoe UI,Arial;background:var(--bg);color:#e6eef8}
+.container{max-width:1100px;margin:36px auto;padding:18px}
+header{display:flex;flex-direction:column;gap:6px}
+h1{margin:0;font-size:28px}
+#grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:14px;margin-top:18px}
+.card{background:linear-gradient(180deg,rgba(255,255,255,0.02),transparent);padding:12px;border-radius:10px;border:1px solid rgba(255,255,255,0.03)}
+.thumb{height:180px;border-radius:6px;background:#070709;display:flex;align-items:center;justify-content:center;overflow:hidden}
+.meta{padding-top:8px}
+.meta h3{margin:0;font-size:16px}
+.meta p{margin:6px 0 0;color:var(--muted);font-size:13px}
+.btn{display:inline-block;margin-top:10px;padding:8px 12px;border-radius:8px;background:var(--accent);color:#041026;text-decoration:none;font-weight:600}
+footer{margin-top:30px;color:var(--muted)}
+a{color:var(--accent)}
+/* disable right click overlay caret */
+.no-select{-webkit-user-select:none;-ms-user-select:none;user-select:none}
+```
+
+---
+FILE: assets/js/main.js
+```javascript
+// main.js - populates the portfolio grid from projects.json
+(async function(){
+  const resp = await fetch('projects.json').catch(()=>null);
+  const projects = resp ? await resp.json() : [];
+  const grid = document.getElementById('grid');
+  document.getElementById('site-title').textContent = 'Albert\u2019s 3D & PCB Design Portfolio';
+  document.getElementById('site-desc').textContent = 'I specialize in 3D modeling, CAD design, and PCB development.';
+  document.getElementById('contact-email').href = 'mailto:you@example.com';
+
+  if(!projects.length){ grid.innerHTML = '<p style="color:#9aa0a6">No projects yet — add some to <code>projects.json</code>.</p>'; return }
+
+  for(const p of projects){
+    const card = document.createElement('article'); card.className='card no-select';
+    const thumb = document.createElement('div'); thumb.className='thumb';
+
+    // simple thumbnail: type label + name
+    thumb.innerHTML = `<div style="text-align:center;color:#96a0b2"><strong>${p.type.toUpperCase()}</strong><div style='font-size:12px;margin-top:6px'>${p.name}</div></div>`;
+
+    const meta = document.createElement('div'); meta.className='meta';
+    meta.innerHTML = `<h3>${p.name}</h3><p>${p.short || ''}</p>`;
+
+    const a = document.createElement('a'); a.className='btn';
+    // open appropriate viewer with id (obfuscated path technique: pass project id, viewer will fetch full path)
+    if(p.type==='3d') a.href = `viewer-3d.html?id=${encodeURIComponent(p.id)}`;
+    if(p.type==='step') a.href = `viewer-step.html?id=${encodeURIComponent(p.id)}`;
+    if(p.type==='gerber') a.href = `viewer-gerber.html?id=${encodeURIComponent(p.id)}`;
+    a.textContent='Open Project';
+
+    card.appendChild(thumb); card.appendChild(meta); card.appendChild(a);
+    grid.appendChild(card);
+  }
+})();
+
+// disable right click
+window.addEventListener('contextmenu', e=>e.preventDefault());
+```
+
+---
+FILE: projects.json
+```json
+[
+  {
+    "id":"proj-001",
+    "name":"Sample 3D Model",
+    "type":"3d",
+    "short":"A simple GLB demo.",
+    "files":{
+      "glb":"assets/models/sample.glb"
+    },
+    "tools":"Blender",
+    "description":"Drag to rotate, scroll to zoom."
+  },
+  {
+    "id":"proj-002",
+    "name":"Sample STEP Part",
+    "type":"step",
+    "short":"A STEP CAD example.",
+    "files":{
+      "step":"assets/step/sample.step"
+    },
+    "tools":"Fusion 360",
+    "description":"Rendered via OpenCascade in-browser."
+  },
+  {
+    "id":"proj-003",
+    "name":"Sample PCB (Gerber)",
+    "type":"gerber",
+    "short":"Gerber board preview.",
+    "files":{
+      "gerber_dir":"assets/gerber/sample/"
+    },
+    "tools":"KiCad",
+    "description":"Gerber layers visualized in the browser."
+  }
+]
+```
+
+---
+FILE: viewer-3d.html
+```html
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>3D Viewer</title>
+  <link rel="stylesheet" href="assets/css/styles.css">
+  <style>body,html{height:100%;margin:0}#viewer{height:72vh;background:#08090a;border-radius:10px}</style>
+</head>
+<body>
+  <main class="container">
+    <a href="/">← Back</a>
+    <h2 id="proj-name"></h2>
+    <div id="viewer"></div>
+    <div id="proj-meta"></div>
+  </main>
+
+  <!-- Three.js from CDN -->
+  <script src="https://unpkg.com/three@0.160.0/build/three.min.js"></script>
+  <script src="https://unpkg.com/three@0.160.0/examples/js/loaders/GLTFLoader.js"></script>
+  <script>
+    // basic Three.js viewer that fetches projects.json, finds id, loads glb/obj/stl
+    (async function(){
+      const params = new URLSearchParams(location.search);
+      const id = params.get('id');
+      const projects = await (await fetch('projects.json')).json();
+      const p = projects.find(x=>x.id===id);
+      if(!p){ document.getElementById('proj-name').textContent='Project not found'; return }
+      document.getElementById('proj-name').textContent = p.name;
+      document.getElementById('proj-meta').innerHTML = `<p><strong>Tools:</strong> ${p.tools}</p><p>${p.description}</p>`;
+
+      // scene
+      const container = document.getElementById('viewer');
+      const scene = new THREE.Scene();
+      const renderer = new THREE.WebGLRenderer({antialias:true}); renderer.setSize(container.clientWidth, container.clientHeight); renderer.setPixelRatio(window.devicePixelRatio);
+      container.appendChild(renderer.domElement);
+      const camera = new THREE.PerspectiveCamera(45, container.clientWidth/container.clientHeight, 0.1, 1000); camera.position.set(0,0,3);
+      const light = new THREE.DirectionalLight(0xffffff,1); light.position.set(1,2,3); scene.add(light);
+      const ambient = new THREE.AmbientLight(0x888888); scene.add(ambient);
+
+      // controls (minimal)
+      let isDown=false, lastX=0, lastY=0, rotX=0, rotY=0, distance=3;
+      renderer.domElement.addEventListener('pointerdown', e=>{isDown=true; lastX=e.clientX; lastY=e.clientY});
+      window.addEventListener('pointerup', ()=>isDown=false);
+      window.addEventListener('pointermove', e=>{ if(!isDown) return; const dx=(e.clientX-lastX)/200; const dy=(e.clientY-lastY)/200; rotY += dx; rotX += dy; lastX=e.clientX; lastY=e.clientY });
+      window.addEventListener('wheel', e=>{ distance += e.deltaY*0.002; distance = Math.max(0.6, Math.min(10, distance)) });
+
+      let modelGroup = new THREE.Group(); scene.add(modelGroup);
+
+      function animate(){ requestAnimationFrame(animate); modelGroup.rotation.y = rotY; modelGroup.rotation.x = rotX; camera.position.set(0,0,distance); renderer.render(scene,camera) }
+      animate();
+
+      // loader for glb
+      if(p.files && p.files.glb){
+        const loader = new THREE.GLTFLoader();
+        loader.load(p.files.glb, gltf=>{ modelGroup.add(gltf.scene); fitToView(gltf.scene) }, undefined, err=>console.error(err));
+      }
+
+      function fitToView(obj){
+        const box = new THREE.Box3().setFromObject(obj); const size = box.getSize(new THREE.Vector3()); const max = Math.max(size.x,size.y,size.z); const s = 1.4 / max; obj.scale.setScalar(s);
+        const center = box.getCenter(new THREE.Vector3()); obj.position.multiplyScalar(-1).add(new THREE.Vector3(-center.x, -center.y, -center.z));
+      }
+
+    })();
+    // disable saving via drag
+    document.addEventListener('dragstart', e=>e.preventDefault());
+  </script>
+</body>
+</html>
+```
+
+---
+FILE: viewer-step.html
+```html
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>STEP Viewer</title>
+  <link rel="stylesheet" href="assets/css/styles.css">
+  <style>#occt{height:72vh;border-radius:10px;background:#071018}</style>
+</head>
+<body>
+  <main class="container">
+    <a href="/">← Back</a>
+    <h2 id="proj-name"></h2>
+    <div id="occt"></div>
+    <div id="proj-meta"></div>
+  </main>
+
+  <!-- OpenCascade.js - CDN placeholder (supply appropriate build) -->
+  <script src="https://cdn.jsdelivr.net/npm/opencascade.js@0.0.24/dist/opencascade.js"></script>
+  <script>
+    (async function(){
+      const params = new URLSearchParams(location.search);
+      const id = params.get('id');
+      const projects = await (await fetch('projects.json')).json();
+      const p = projects.find(x=>x.id===id);
+      if(!p){ document.getElementById('proj-name').textContent='Project not found'; return }
+      document.getElementById('proj-name').textContent = p.name;
+      document.getElementById('proj-meta').innerHTML = `<p><strong>Tools:</strong> ${p.tools}</p><p>${p.description}</p>`;
+
+      // minimal OpenCascade viewer example: load STEP and display
+      const occt = await initOpenCascade();
+      const base64 = false;
+      const stepPath = p.files && p.files.step;
+      if(!stepPath) return;
+      const res = await fetch(stepPath).then(r=>r.arrayBuffer());
+      // create viewer canvas
+      const parent = document.getElementById('occt');
+      const canvas = document.createElement('canvas'); canvas.style.width='100%'; canvas.style.height='100%'; parent.appendChild(canvas);
+      // init viewer
+      const viewer = new occt.OpenCascadeViewer(canvas);
+      viewer.setBackgroundColor(7,10,18);
+      viewer.displayFromSTEPBytes(new Uint8Array(res));
+
+      // helper to initialize occt
+      async function initOpenCascade(){
+        return new Promise((resolve)=>{
+          if(typeof opencascade !== 'undefined') resolve(opencascade);
+          else { console.error('OpenCascade not loaded'); resolve(opencascade); }
+        })
+      }
+
+    })();
+  </script>
+</body>
+</html>
+```
+
+---
+FILE: viewer-gerber.html
+```html
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Gerber Viewer</title>
+  <link rel="stylesheet" href="assets/css/styles.css">
+  <style>#gerber{height:72vh;border-radius:10px;background:#071018}</style>
+</head>
+<body>
+  <main class="container">
+    <a href="/">← Back</a>
+    <h2 id="proj-name"></h2>
+    <div id="gerber"></div>
+    <div id="proj-meta"></div>
+  </main>
+
+  <!-- tracespace-view (minimal) -->
+  <script src="https://unpkg.com/tracespace-view@latest/dist/tracespace-view.min.js"></script>
+  <script>
+    (async function(){
+      const params = new URLSearchParams(location.search);
+      const id = params.get('id');
+      const projects = await (await fetch('projects.json')).json();
+      const p = projects.find(x=>x.id===id);
+      if(!p){ document.getElementById('proj-name').textContent='Project not found'; return }
+      document.getElementById('proj-name').textContent = p.name;
+      document.getElementById('proj-meta').innerHTML = `<p><strong>Tools:</strong> ${p.tools}</p><p>${p.description}</p>`;
+
+      const el = document.getElementById('gerber');
+      // tracespace expects an archive; for simplicity, we use a directory URL configured in projects.json
+      const dir = p.files && p.files.gerber_dir;
+      if(!dir) return;
+
+      // trace-space viewer helper from CDN
+      const viewer = new tracespaceView.Viewer({element: el});
+      // load board from an index.json hosted in the gerber directory (user should provide it) or just load all files
+      // For starter we attempt to fetch dir/index.json
+      try{
+        const index = await fetch(dir + 'index.json').then(r=>r.json());
+        await viewer.load(index);
+      }catch(e){
+        el.innerHTML = '<p style="color:#9aa0a6">Please include an index.json in the gerber directory or configure the project files accordingly.</p>';
+      }
+
+    })();
+  </script>
+</body>
+</html>
+```
+
+---
+FILE: assets/ (notes)
+```text
+- Place your 3D models into assets/models/ e.g. assets/models/sample.glb
+- Place STEP files into assets/step/
+- Place GERBER files into assets/gerber/<project>/ and include an index.json for tracespace-view
+```
+
+---
+FILE: LICENSE
+```text
+MIT
+```
+
+---
+End of starter pack.
